@@ -12,12 +12,22 @@ import pymysql
 import requests
 import time
 import random
+import configparser
+import os
+
+config_info = configparser.ConfigParser()
+fui = config_info.read("config.ini")
+mysql_info_host = config_info.get("mysql", "host")
+mysql_info_name = config_info.get("mysql", "db_name")
+mysql_info_username = config_info.get("mysql", "username")
+mysql_info_password = config_info.get("mysql", "password")
 
 
 # 打开数据库连接
 # 使用cursor()方法获取操作游标
 def get_all():
-	db = pymysql.connect(host="127.0.0.1", user="test", password="TESTTEST", database="PIXIV_request")
+	db = pymysql.connect(host=mysql_info_host, user=mysql_info_username, password=mysql_info_password,
+	                     database=mysql_info_name)
 	cursor = db.cursor()
 	# SQL 查询语句
 	sql = "select * from PIXIV_day"
