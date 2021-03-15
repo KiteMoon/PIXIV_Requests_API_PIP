@@ -3,10 +3,10 @@
 #
 # Copyright (C) 2021 桜火, Inc. All Rights Reserved 
 #
-# @Time    : 2021/2/23 14:58
+# @Time    : 2021/3/15 10:01
 # @Author  : 桜火
 # @Email   : xie@loli.fit
-# @File    : Get_pixiv_day_list.py
+# @File    : Get_pixiv_week_llist.py
 # @Software: PyCharm
 import requests
 import pymysql
@@ -25,17 +25,8 @@ db = pymysql.connect(host=mysql_info_host, user=mysql_info_username, password=my
 cursor = db.cursor()
 # 使用cursor()方法获取操作游标
 tags_list = []#TAG列表
-def get_database_pid_list():
-	_pid_list = []
-	_sql = "SELECT PID FROM pixiv_day"#执行搜索语句，搜索全部PID
-	cursor.execute(_sql)
-	_database_pid_list = cursor.fetchall()
-	for pid in _database_pid_list:
-		_pid_list.append(pid[0])
-	return (_pid_list)
 def sql_sava(PID, NAME, AUTHOR, img_big_link_num, Width, Height, tags_dist, img_big_link_regular,
-             img_big_link_original):#保存到数据库方法
-
+             img_big_link_original):#保存到税局库方法
 	list_id = 0
 	print("-----开始进行SQL-----")
 	_data = "(" + str(PID) + "," + '"' + NAME + '"'"," + '"' + AUTHOR + '"' + ",'" + json.dumps(tags_dist,ensure_ascii=False) + "',"
@@ -43,7 +34,7 @@ def sql_sava(PID, NAME, AUTHOR, img_big_link_num, Width, Height, tags_dist, img_
 	_data = _data + '"' + img_big_link_num + '",' + '"' + Width + '",' + '"' + Height + '"' + ")"
 	#别问，问就是我也不知道写的啥
 	#print(_data) 需要的时候自行取消注释
-	_sql = "INSERT INTO pixiv_day (PID,NAME,AUTHOR,TAGS,img_big_link,img_original_link,P_NUM,Width,Height) VALUES " + _data
+	_sql = "INSERT INTO pixiv_week (PID,NAME,AUTHOR,TAGS,img_big_link,img_original_link,P_NUM,Width,Height) VALUES " + _data
 	print("执行SQL语句"+_sql)
 	try:
 		cursor.execute(_sql)
@@ -53,18 +44,14 @@ def sql_sava(PID, NAME, AUTHOR, img_big_link_num, Width, Height, tags_dist, img_
 	except:
 		print("可能出现了重复的键，跳过")
 		return (0)
-
-get_database_pid_list()
 for page in range(1,5):
 
-	url = "https://www.pixiv.net/ranking.php?p="+str(page)+"&format=json&format%09=day"
+	url = "https://www.pixiv.net/ranking.php?p="+str(page)+"&format=json&format%09=week"
 	pixiv_day = requests.get(url)
 	pixiv_day_json = pixiv_day.json()
 	pixiv_day_json_list = pixiv_day_json["contents"]
 	for num in range(1, 50):
 		pixiv_day_json_data = pixiv_day_json_list[num]
-		if pixiv_day_json_data["illust_id"] in get_database_pid_list():#如果有重复的就直接不执行，剩下一次get和一堆数据处理
-			continue
 		if "漫画" not in pixiv_day_json_data["tags"]:
 			tags_dist = {
 				"tags": pixiv_day_json_data["tags"]
