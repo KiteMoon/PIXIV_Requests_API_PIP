@@ -51,13 +51,14 @@ def sql_sava(PID, NAME, AUTHOR, img_big_link_num, Width, Height, tags_dist, img_
 		#list_id = list_id + 1
 		return (1)
 	except:
-		print("可能出现了重复的键，跳过")
+		print("可能出现了重复的键或者没有数据输出，跳过")
 		return (0)
 
 get_database_pid_list()
 for page in range(1,5):
 
 	url = "https://www.pixiv.net/ranking.php?p="+str(page)+"&format=json&format%09=day"
+	print("获取API")
 	pixiv_day = requests.get(url)
 	pixiv_day_json = pixiv_day.json()
 	pixiv_day_json_list = pixiv_day_json["contents"]
