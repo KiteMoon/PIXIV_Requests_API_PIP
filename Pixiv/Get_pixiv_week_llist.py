@@ -38,21 +38,21 @@ def sql_sava(PID, NAME, AUTHOR, img_big_link_num, Width, Height, tags_dist, img_
 
 	list_id = 0
 	print("-----开始进行SQL-----")
-	_data = "(" + str(PID) + "," + '"' + NAME + '"'"," + '"' + AUTHOR + '"' + ",'" + json.dumps(tags_dist,ensure_ascii=False) + "',"
-	_data = _data + '"' + img_big_link_regular + '",' + '"' + img_big_link_original + '",'
-	_data = _data + '"' + img_big_link_num + '",' + '"' + Width + '",' + '"' + Height + '"' + ")"
+	_data = (str(PID),NAME,AUTHOR,json.dumps(tags_dist,ensure_ascii=False),img_big_link_regular,img_big_link_original,img_big_link_num,Width,Height)
 	#别问，问就是我也不知道写的啥
 	#print(_data) 需要的时候自行取消注释
-	_sql = "INSERT INTO pixiv_week (PID,NAME,AUTHOR,TAGS,img_big_link,img_original_link,P_NUM,Width,Height) VALUES " + _data
-	print("执行SQL语句"+_sql)
+	_sql = "INSERT INTO pixiv_week (PID,NAME,AUTHOR,TAGS,img_big_link,img_original_link,P_NUM,Width,Height) VALUES {}".format(_data)
+	print("执行SQL语句："+_sql)
+	print("hello")
 	try:
 		cursor.execute(_sql)
 		db.commit()
-		#list_id = list_id + 1
-		return (1)
+		list_id = list_id + 1
+		print("没进语句？")
+		return (int(list_id))
 	except:
-		print("可能出现了重复的键或者没有数据输出，跳过")
-		return (0)
+		print("发送意料不到的错误")
+		return("error")
 
 get_database_pid_list()
 for page in range(1,5):
@@ -65,12 +65,14 @@ for page in range(1,5):
 	for num in range(1, 50):
 		pixiv_day_json_data = pixiv_day_json_list[num]
 		if pixiv_day_json_data["illust_id"] in get_database_pid_list():#如果有重复的就直接不执行，剩下一次get和一堆数据处理
+			print("发现重复的PID:"+str(pixiv_day_json_data["illust_id"])+"系统自动跳过本UID")
 			continue
 		if "漫画" not in pixiv_day_json_data["tags"]:
 			tags_dist = {
 				"tags": pixiv_day_json_data["tags"]
 			}
 			PID = pixiv_day_json_data["illust_id"]
+			print(PID)
 			NAME = pixiv_day_json_data["title"]
 			AUTHOR = pixiv_day_json_data["user_name"]
 			Width = pixiv_day_json_data["width"]
@@ -96,6 +98,12 @@ for page in range(1,5):
 			print("采集完毕，正在准备休眠：" + str(sleep_time))
 			time.sleep(sleep_time)
 			list_num = sql_sava(PID, NAME, AUTHOR, str(img_big_link_num), str(Width), str(Height), tags_dist,img_big_link_regular,img_big_link_original)
+			if list_num==0:
+				print("未检测到榜单更新")
+			elif list_num == "error":
+				print("发送程序错误，请管理员尽快处理")
+			else:
+				print("本次更新已经保存"+str(list_num)+"张图片")
 			#发送到数据库方法，保存到数据库
 			# list_num_all = list_num_all + list_num
 			# print("当前成功保存到数据库的图片序列："+list_num)
