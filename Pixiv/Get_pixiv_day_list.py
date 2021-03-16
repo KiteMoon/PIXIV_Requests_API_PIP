@@ -62,7 +62,7 @@ for page in range(1,5):
 	pixiv_day = requests.get(url)
 	pixiv_day_json = pixiv_day.json()
 	pixiv_day_json_list = pixiv_day_json["contents"]
-	for num in range(1, 50):
+	for num in range(1, len(pixiv_day_json_list)):
 		pixiv_day_json_data = pixiv_day_json_list[num]
 		if pixiv_day_json_data["illust_id"] in get_database_pid_list():#如果有重复的就直接不执行，剩下一次get和一堆数据处理
 			print("发现重复的PID:"+str(pixiv_day_json_data["illust_id"])+"系统自动跳过本UID")
@@ -103,6 +103,7 @@ for page in range(1,5):
 			elif list_num == "error":
 				print("发送程序错误，请管理员尽快处理")
 			else:
+				save_number = save_number + 1
 				print("已经正常添加图片到数据库")
 			#发送到数据库方法，保存到数据库
 			# list_num_all = list_num_all + list_num
