@@ -6,7 +6,7 @@
 # @Time    : 2021/2/23 14:58
 # @Author  : 桜火
 # @Email   : xie@loli.fit
-# @File    : Get_pixiv_day_list.py
+# @File    : Get_pixiv_week_list.py
 # @Software: PyCharm
 import requests
 import pymysql
@@ -24,6 +24,7 @@ mysql_info_password = config_info.get("mysql","password")
 db = pymysql.connect(host=mysql_info_host, user=mysql_info_username, password=mysql_info_password, database=mysql_info_name)
 cursor = db.cursor()
 # 使用cursor()方法获取操作游标
+save_number = 0
 tags_list = []#TAG列表
 def get_database_pid_list():
 	_pid_list = []
@@ -43,12 +44,11 @@ def sql_sava(PID, NAME, AUTHOR, img_big_link_num, Width, Height, tags_dist, img_
 	#print(_data) 需要的时候自行取消注释
 	_sql = "INSERT INTO pixiv_week (PID,NAME,AUTHOR,TAGS,img_big_link,img_original_link,P_NUM,Width,Height) VALUES {}".format(_data)
 	print("执行SQL语句："+_sql)
-	print("hello")
 	try:
 		cursor.execute(_sql)
 		db.commit()
 		list_id = list_id + 1
-		print("没进语句？")
+
 		return (int(list_id))
 	except:
 		print("发送意料不到的错误")
@@ -57,27 +57,27 @@ def sql_sava(PID, NAME, AUTHOR, img_big_link_num, Width, Height, tags_dist, img_
 get_database_pid_list()
 for page in range(1,5):
 
-	url = "https://www.pixiv.net/ranking.php?p="+str(page)+"&format=json&format%09=day"
+	url = "https://www.pixiv.net/ranking.php?p="+str(page)+"&format=json&format%09=week"
 	print("获取API")
-	pixiv_day = requests.get(url)
-	pixiv_day_json = pixiv_day.json()
-	pixiv_day_json_list = pixiv_day_json["contents"]
+	pixiv_week = requests.get(url)
+	pixiv_week_json = pixiv_week.json()
+	pixiv_week_json_list = pixiv_week_json["contents"]
 	for num in range(1, 50):
-		pixiv_day_json_data = pixiv_day_json_list[num]
-		if pixiv_day_json_data["illust_id"] in get_database_pid_list():#如果有重复的就直接不执行，剩下一次get和一堆数据处理
-			print("发现重复的PID:"+str(pixiv_day_json_data["illust_id"])+"系统自动跳过本UID")
+		pixiv_week_json_data = pixiv_week_json_list[num]
+		if pixiv_week_json_data["illust_id"] in get_database_pid_list():#如果有重复的就直接不执行，剩下一次get和一堆数据处理
+			print("发现重复的PID:"+str(pixiv_week_json_data["illust_id"])+"系统自动跳过本UID")
 			continue
-		if "漫画" not in pixiv_day_json_data["tags"]:
+		if "漫画" not in pixiv_week_json_data["tags"]:
 			tags_dist = {
-				"tags": pixiv_day_json_data["tags"]
+				"tags": pixiv_week_json_data["tags"]
 			}
-			PID = pixiv_day_json_data["illust_id"]
+			PID = pixiv_week_json_data["illust_id"]
 			print(PID)
-			NAME = pixiv_day_json_data["title"]
-			AUTHOR = pixiv_day_json_data["user_name"]
-			Width = pixiv_day_json_data["width"]
-			Height = pixiv_day_json_data["height"]
-			tags_list = pixiv_day_json_data["tags"]
+			NAME = pixiv_week_json_data["title"]
+			AUTHOR = pixiv_week_json_data["user_name"]
+			Width = pixiv_week_json_data["width"]
+			Height = pixiv_week_json_data["height"]
+			tags_list = pixiv_week_json_data["tags"]
 			_get_img_header = {
 				"accept-encoding": "gzip, deflate, br",
 				"accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
@@ -88,23 +88,26 @@ for page in range(1,5):
 				"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.58 Safari/537.36 Edg/89.0.774.34"
 			}
 			_get_img_url = "https://www.pixiv.net/ajax/illust/" + str(PID) + "/pages"#拼接API接口
-			pixiv_day_img = requests.get(url=_get_img_url, headers=_get_img_header)
-			pixiv_day_img_json = pixiv_day_img.json()
+			pixiv_week_img = requests.get(url=_get_img_url, headers=_get_img_header)
+			pixiv_week_img_json = pixiv_week_img.json()
 			#获取API接口信息
-			img_big_link_num = len(pixiv_day_img_json["body"])#获取一共有多少个分P
-			img_big_link_regular = pixiv_day_img_json["body"][0]["urls"]["regular"]#获取大图片地址（压缩）
-			img_big_link_original = pixiv_day_img_json["body"][0]["urls"]["original"]#获取原始图片地址（不压缩）
+			img_big_link_num = len(pixiv_week_img_json["body"])#获取一共有多少个分P
+			img_big_link_regular = pixiv_week_img_json["body"][0]["urls"]["regular"]#获取大图片地址（压缩）
+			img_big_link_original = pixiv_week_img_json["body"][0]["urls"]["original"]#获取原始图片地址（不压缩）
 			sleep_time = random.randint(1,3)#随机休眠
 			print("采集完毕，正在准备休眠：" + str(sleep_time))
 			time.sleep(sleep_time)
 			list_num = sql_sava(PID, NAME, AUTHOR, str(img_big_link_num), str(Width), str(Height), tags_dist,img_big_link_regular,img_big_link_original)
+			save_number=list_num
 			if list_num==0:
 				print("未检测到榜单更新")
 			elif list_num == "error":
 				print("发送程序错误，请管理员尽快处理")
 			else:
-				print("本次更新已经保存"+str(list_num)+"张图片")
+				print("成功添加图片到数据库")
 			#发送到数据库方法，保存到数据库
 			# list_num_all = list_num_all + list_num
 			# print("当前成功保存到数据库的图片序列："+list_num)
 			#计算保存序列
+print("本次更新已经保存" + str(save_number) + "张图片")
+print("---------------------爬取结束，下次爬取将会在2小时后开始----------------------------")

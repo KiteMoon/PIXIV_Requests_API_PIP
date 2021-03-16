@@ -25,6 +25,7 @@ db = pymysql.connect(host=mysql_info_host, user=mysql_info_username, password=my
 cursor = db.cursor()
 # 使用cursor()方法获取操作游标
 tags_list = []#TAG列表
+save_number = 0
 def get_database_pid_list():
 	_pid_list = []
 	_sql = "SELECT PID FROM pixiv_day"#执行搜索语句，搜索全部PID
@@ -50,7 +51,7 @@ def sql_sava(PID, NAME, AUTHOR, img_big_link_num, Width, Height, tags_dist, img_
 		cursor.execute(_sql)
 		db.commit()
 		list_id = list_id + 1
-		return (list_id)
+		return (str(list_id))
 	except:
 		print("发送意料不到的错误")
 
@@ -96,13 +97,16 @@ for page in range(1,5):
 			print("采集完毕，正在准备休眠：" + str(sleep_time))
 			time.sleep(sleep_time)
 			list_num = sql_sava(PID, NAME, AUTHOR, str(img_big_link_num), str(Width), str(Height), tags_dist,img_big_link_regular,img_big_link_original)
+			save_number =list_num
 			if list_num == 0:
 				print("未检测到榜单更新")
 			elif list_num == "error":
 				print("发送程序错误，请管理员尽快处理")
 			else:
-				print("本次更新已经保存" + str(list_num) + "张图片")
+				print("已经正常添加图片到数据库")
 			#发送到数据库方法，保存到数据库
 			# list_num_all = list_num_all + list_num
 			# print("当前成功保存到数据库的图片序列："+list_num)
 			#计算保存序列
+print("本次更新已经保存" + str(list_num) + "张图片")
+print("---------------------爬取结束，下次爬取将会在2小时后开始----------------------------")
